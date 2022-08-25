@@ -1,0 +1,6 @@
+framework module Pods_KittyBreedsTests {
+  umbrella header "Pods-KittyBreedsTests-umbrella.h"
+
+  export *
+  module * { export * }
+}
