@@ -17,8 +17,7 @@ class AppCoordinator {
     
     func start() {
         let viewController = KittyBreedListController()
-        let navigationController = UINavigationController()
-        navigationController.pushViewController(viewController, animated: true)
+        let navigationController = UINavigationController(rootViewController: viewController)
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
     }

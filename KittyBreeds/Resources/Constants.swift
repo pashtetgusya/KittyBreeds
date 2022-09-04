@@ -9,10 +9,14 @@ import Foundation
 
 struct Constants {
     static let scheme = "https"
+    
     static let host = "api.thecatapi.com"
+    static let imageHost = "cdn2.thecatapi.com"
+    
     static let kittyBreedsPath = "/v1/breeds"
     static let kittyBreedSearchPath = "/v1/breeds/search"
-    static let kittyBreedImagesSearchPath = "/v1/images/search"
+    
+    static let kittyBreedImagePath = "/images"
     
     static let kittyBreedListCellIdentifier = "\(KittyBreedListCell.self)"
 }

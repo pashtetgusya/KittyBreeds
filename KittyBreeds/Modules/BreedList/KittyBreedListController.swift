@@ -9,48 +9,69 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-class KittyBreedListController: UIViewController, UIScrollViewDelegate {
+class KittyBreedListController: UIViewController, UISearchControllerDelegate {
     
+    // MARK: - Private properties
     private let disposeBag = DisposeBag()
     private let kittyBreedListView = KittyBreedListView()
     private let kittyBreedListViewModel = KittyBreedListViewModel()
     
+    private var isSearch = false
+    
+    // MARK: - Lifecycle
     override func loadView() {
-        super.loadView()
-        
-        self.view = kittyBreedListView
+        view = kittyBreedListView
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        kittyBreedListView.setupNavigationItem(in: self)
+        showOrHideSearchBarButtons(isHidden: false)
         
         setupBindings()
         kittyBreedListViewModel.fetchKittyBreeds()
     }
-        
+                
 }
 
+// MARK: - UIScrollViewDelegate
+extension KittyBreedListController: UIScrollViewDelegate { }
+
+// MARK: - UISearchBarDelegate
+extension KittyBreedListController: UISearchBarDelegate { }
+
+// MARK: - RX bindings
 private extension KittyBreedListController {
-    
     func setupBindings() {
-        
+        bindNavigationItem()
+        bindSearchBar()
+        bindTableView()
+        bindRefreshControl()
+        bindErrorAlert()
+    }
+    
+    func bindNavigationItem() {
+        // Left bitton item tap
         navigationItem
-            .rightBarButtonItem?.rx
+            .leftBarButtonItem?.rx
             .tap
-            .bind { [weak self] in
-                self?.kittyBreedListViewModel.fetchKittyBreeds()
-            }
+            .subscribe(onNext:  { [weak self] in
+                self?.kittyBreedListView.kittyBreedSearchBar.becomeFirstResponder()
+                self?.startSearch(isHidden: false)
+            })
             .disposed(by: disposeBag)
-        
+    }
+    
+    func bindSearchBar() {
+        // Set delegate
         kittyBreedListView
-            .kittyBreedListTableView.rx
+            .kittyBreedSearchBar.rx
             .setDelegate(self)
             .disposed(by: disposeBag)
 
+        // Search
         kittyBreedListView
-            .breedSearchBar.rx
+            .kittyBreedSearchBar.rx
             .text
             .orEmpty
             .debounce(.seconds(1), scheduler: MainScheduler.instance)
@@ -58,9 +79,65 @@ private extension KittyBreedListController {
             .filter { !$0.isEmpty }
             .subscribe(onNext: { [weak self] breedName in
                 self?.kittyBreedListViewModel.fetchKittyBreed(breed: breedName)
+                self?.isSearch.toggle()
             })
             .disposed(by: disposeBag)
+
+        // Search button clicked
+        kittyBreedListView
+            .kittyBreedSearchBar.rx
+            .searchButtonClicked
+            .subscribe(onNext: { [weak self] in
+                self?.becomeFirstResponder()
+            })
+            .disposed(by: disposeBag)
+
+        // Cancel button clicked
+        kittyBreedListView
+            .kittyBreedSearchBar.rx
+            .cancelButtonClicked
+            .subscribe(onNext: { [weak self] in
+                if self?.isSearch == true {
+                    self?.kittyBreedListViewModel.fetchKittyBreeds()
+                    self?.isSearch.toggle()
+                }
+                self?.startSearch(isHidden: true)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    func bindTableView() {
+        // Set delegate
+        kittyBreedListView
+            .kittyBreedListTableView.rx
+            .setDelegate(self)
+            .disposed(by: disposeBag)
         
+        // Table items
+        kittyBreedListViewModel
+            .kittyBreeds
+            .bind(to: kittyBreedListView.kittyBreedListTableView.rx.items(
+                cellIdentifier: Constants.kittyBreedListCellIdentifier,
+                cellType: KittyBreedListCell.self)
+            ) { [weak self] index, breedData, cell in
+                
+                cell.setImageForBreedImageView(referenceImageID: breedData.imageID ?? "")
+                cell.setTextForBreedNameLabel(text: breedData.name ?? "")
+                cell.setTextForBreedDescriptionLabel(text: breedData.description ?? "")
+                cell.setTextForBreedOriginLabel(text: breedData.origin ?? "")
+
+                // Show breed info controller on tap
+                cell.showKittyBreedInfoButton.rx
+                    .tap
+                    .bind {
+                        self?.showBreedInfoView(with: breedData.id)
+                    }.disposed(by: cell.disposeBag)
+                
+            }.disposed(by: disposeBag)
+    }
+    
+    func bindRefreshControl() {
+        // Control event
         kittyBreedListView
             .kittyBreedListRefreshControl.rx
             .controlEvent(.valueChanged)
@@ -69,42 +146,26 @@ private extension KittyBreedListController {
             })
             .disposed(by: disposeBag)
         
+        // Show or hide
         kittyBreedListViewModel
             .loading
             .bind(to: kittyBreedListView.kittyBreedListRefreshControl.rx.isRefreshing)
             .disposed(by: disposeBag)
-        
-        kittyBreedListViewModel
-            .kittyBreeds
-            .bind(to: kittyBreedListView.kittyBreedListTableView.rx.items(
-                cellIdentifier: Constants.kittyBreedListCellIdentifier,
-                cellType: KittyBreedListCell.self)
-            ) { [weak self] index, breedData, cell in
-                
-                cell.setImageForBreedImageView(urlString: breedData.image?.url ?? "")
-                cell.setTextForBreedNameLabel(text: breedData.name ?? "")
-                cell.setTextForBreedDescriptionLabel(text: breedData.description ?? "")
-                cell.setTextForBreedOriginLabel(text: breedData.origin ?? "")
-
-                cell.showKittyBreedInfoButton.rx
-                    .tap
-                    .bind {
-                        self?.showBreedInfoView(with: breedData.id)
-                    }.disposed(by: cell.disposeBag)
-                
-            }.disposed(by: disposeBag)
-        
+    }
+    
+    func bindErrorAlert() {
+        // Show error alert
         kittyBreedListViewModel
             .error
             .subscribe { [weak self] error in
-                guard let allert = self?.kittyBreedListView.setupErrorAlert(error: error.debugDescription) else {
-                    return
-                }
-                self?.present(allert, animated: true)
+                self?.showErrorAlert(error: error.debugDescription)
             }
             .disposed(by: disposeBag)
     }
-    
+}
+
+// MARK: - Navigation
+private extension KittyBreedListController {
     func showBreedInfoView(with id: String) {
         let viewController = KittyBreedInfoController()
         viewController.kittyBreedID = id
@@ -112,4 +173,27 @@ private extension KittyBreedListController {
         navigationController?.pushViewController(viewController, animated: true)
     }
     
+    func showErrorAlert(error: String) {
+        let allert = kittyBreedListView.getErrorAlert(error: error)
+        present(allert, animated: true)
+    }
+}
+
+// MARK: - Navigation item
+private extension KittyBreedListController {
+    func showOrHideSearchBarButtons(isHidden: Bool) {
+        if !isHidden {
+            navigationItem.leftBarButtonItem = kittyBreedListView.searchButtunItem
+            navigationItem.rightBarButtonItem = kittyBreedListView.helpButtonItem
+        } else {
+            navigationItem.leftBarButtonItem = nil
+            navigationItem.rightBarButtonItem = nil
+        }
+    }
+    
+    func startSearch(isHidden: Bool) {
+        showOrHideSearchBarButtons(isHidden: !isHidden)
+        navigationItem.titleView = isHidden ? nil : kittyBreedListView.kittyBreedSearchBar
+    }
+
 }

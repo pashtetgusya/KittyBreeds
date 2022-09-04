@@ -7,8 +7,9 @@
 
 import UIKit
 
-class KittyBreedListView: UIView {
+final class KittyBreedListView: UIView {
     
+    // MARK: - UIView elements
     let kittyBreedListTableView: UITableView = {
         let tableView = UITableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -29,16 +30,33 @@ class KittyBreedListView: UIView {
         return refresh
     }()
     
-    let breedSearchBar: UISearchBar = {
-        let width = UIScreen.main.bounds.width - 72
-        
-        let searchBar = UISearchBar(frame: CGRect(x: 0, y: -5, width: width, height: .leastNormalMagnitude))
+    let kittyBreedSearchBar: UISearchBar = {
+        let searchBar = UISearchBar()
+        searchBar.barStyle = .black
+        searchBar.isTranslucent = true
+        searchBar.showsCancelButton = true
         searchBar.placeholder = "Search kitty breed"
-        
+        searchBar.tintColor = .black
+        searchBar.searchTextField.textColor = .white
+
         return searchBar
     }()
-
-
+    
+    let searchButtunItem: UIBarButtonItem = {
+        let item = UIBarButtonItem(systemItem: .search)
+        item.tintColor = .black
+        
+        return item
+    }()
+    
+    let helpButtonItem: UIBarButtonItem = {
+        let item = UIBarButtonItem(systemItem: .bookmarks)
+        item.tintColor = .black
+        
+        return item
+    }()
+    
+    // MARK: - Init methods
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -52,15 +70,12 @@ class KittyBreedListView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setupNavigationItem(in controller: UIViewController) {
-        let leftNavBarButton = UIBarButtonItem(customView: breedSearchBar)
-        let rightNavBarButton = UIBarButtonItem(systemItem: .refresh)
-        rightNavBarButton.tintColor = .black
-        controller.navigationItem.leftBarButtonItem = leftNavBarButton
-        controller.navigationItem.rightBarButtonItem = rightNavBarButton
-    }
-        
-    func setupErrorAlert(error message: String) -> UIAlertController {
+}
+
+// MARK: - Public methods
+extension KittyBreedListView {
+            
+    func getErrorAlert(error message: String) -> UIAlertController {
         let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
         let actionOK = UIAlertAction(title: "Ok", style: .default)
         
@@ -71,10 +86,11 @@ class KittyBreedListView: UIView {
     
 }
 
+// MARK: - Setup methods
 private extension KittyBreedListView {
     
     func setupView() {
-        backgroundColor = .white
+        backgroundColor = .systemPurple
         
         addSubview(kittyBreedListTableView)
     }

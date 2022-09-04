@@ -122,6 +122,14 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		E56DF41D28C4C7E20069E624 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				E58CA90828B534FD00F69A5D /* NetworkManager.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
 		E58CA8C028B52EEE00F69A5D = {
 			isa = PBXGroup;
 			children = (
@@ -214,7 +222,7 @@
 		E58CA90728B534F400F69A5D /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				E58CA90828B534FD00F69A5D /* NetworkManager.swift */,
+				E56DF41D28C4C7E20069E624 /* Network */,
 			);
 			path = Services;
 			sourceTree = "<group>";

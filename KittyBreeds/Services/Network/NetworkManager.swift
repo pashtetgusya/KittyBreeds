@@ -32,22 +32,23 @@ class NetworkManager {
             }
     }
     
-}
-
-private extension NetworkManager {
-    func createURL(path: String) -> URL{
+    func createURL(host: String = Constants.host, path: String) -> URL{
         var urlComponents = URLComponents()
         urlComponents.scheme = Constants.scheme
-        urlComponents.host = Constants.host
+        urlComponents.host = host
         urlComponents.path = path
         
         return urlComponents.url!
     }
+    
+}
 
+private extension NetworkManager {
+    
     func prepareParameters(breedQueryName: String?, breedQueryID: String?) -> [String: String] {
         var parameters = [String: String]()
         
-        guard let apiKey = ProcessInfo.processInfo.environment["API_KEY"] else {
+        guard ProcessInfo.processInfo.environment["API_KEY"] != nil else {
             return parameters
         }
 

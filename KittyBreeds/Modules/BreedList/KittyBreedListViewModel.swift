@@ -11,12 +11,15 @@ import Alamofire
 
 class KittyBreedListViewModel {
     
-    public var kittyBreeds: PublishSubject<[KittyBreed]> = PublishSubject()
+    // MARK: - Publish subjects
+    public let kittyBreeds: PublishSubject<[KittyBreed]> = PublishSubject()
     public let loading: PublishSubject<Bool> = PublishSubject()
     public let error: PublishSubject<AFError> = PublishSubject()
     
+    // MARK: - Private properties
     private let disposable = DisposeBag()
     
+    // MARK: - Fetch data methods
     func fetchKittyBreeds() {
         
         self.loading.onNext(true)
